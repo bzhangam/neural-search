@@ -8,7 +8,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.mock;
 import static org.opensearch.neuralsearch.processor.TextEmbeddingProcessor.FIELD_MAP_FIELD;
-import static org.opensearch.neuralsearch.processor.TextEmbeddingProcessor.MODEL_ID_FIELD;
+import static org.opensearch.neuralsearch.processor.TextEmbeddingProcessor.INDEX_MAPPING_FIELD;
 import static org.opensearch.neuralsearch.processor.TextImageEmbeddingProcessor.EMBEDDING_FIELD;
 import static org.opensearch.neuralsearch.processor.TextImageEmbeddingProcessor.IMAGE_FIELD_NAME;
 import static org.opensearch.neuralsearch.processor.TextImageEmbeddingProcessor.TEXT_FIELD_NAME;
@@ -39,7 +39,7 @@ public class TextImageEmbeddingProcessorFactoryTests extends OpenSearchTestCase 
         String description = "description";
         boolean ignoreFailure = false;
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, "1234567678");
+        config.put(INDEX_MAPPING_FIELD, "1234567678");
         config.put(EMBEDDING_FIELD, "embedding_field");
         config.put(FIELD_MAP_FIELD, Map.of(TEXT_FIELD_NAME, "my_text_field", IMAGE_FIELD_NAME, "my_image_field"));
         TextImageEmbeddingProcessor inferenceProcessor = (TextImageEmbeddingProcessor) textImageEmbeddingProcessorFactory.create(
@@ -65,7 +65,7 @@ public class TextImageEmbeddingProcessorFactoryTests extends OpenSearchTestCase 
         String description = "description";
         boolean ignoreFailure = false;
         Map<String, Object> configOnlyTextField = new HashMap<>();
-        configOnlyTextField.put(MODEL_ID_FIELD, "1234567678");
+        configOnlyTextField.put(INDEX_MAPPING_FIELD, "1234567678");
         configOnlyTextField.put(EMBEDDING_FIELD, "embedding_field");
         configOnlyTextField.put(FIELD_MAP_FIELD, Map.of(TEXT_FIELD_NAME, "my_text_field"));
         TextImageEmbeddingProcessor processor = (TextImageEmbeddingProcessor) textImageEmbeddingProcessorFactory.create(
@@ -78,7 +78,7 @@ public class TextImageEmbeddingProcessorFactoryTests extends OpenSearchTestCase 
         assertEquals("text_image_embedding", processor.getType());
 
         Map<String, Object> configOnlyImageField = new HashMap<>();
-        configOnlyImageField.put(MODEL_ID_FIELD, "1234567678");
+        configOnlyImageField.put(INDEX_MAPPING_FIELD, "1234567678");
         configOnlyImageField.put(EMBEDDING_FIELD, "embedding_field");
         configOnlyImageField.put(FIELD_MAP_FIELD, Map.of(TEXT_FIELD_NAME, "my_text_field"));
         processor = (TextImageEmbeddingProcessor) textImageEmbeddingProcessorFactory.create(
@@ -104,7 +104,7 @@ public class TextImageEmbeddingProcessorFactoryTests extends OpenSearchTestCase 
         String description = "description";
         boolean ignoreFailure = false;
         Map<String, Object> configMixOfFields = new HashMap<>();
-        configMixOfFields.put(MODEL_ID_FIELD, "1234567678");
+        configMixOfFields.put(INDEX_MAPPING_FIELD, "1234567678");
         configMixOfFields.put(EMBEDDING_FIELD, "embedding_field");
         configMixOfFields.put(FIELD_MAP_FIELD, Map.of(TEXT_FIELD_NAME, "my_text_field", "random_field_name", "random_field"));
         IllegalArgumentException exception = expectThrows(
@@ -122,7 +122,7 @@ public class TextImageEmbeddingProcessorFactoryTests extends OpenSearchTestCase 
             )
         );
         Map<String, Object> configNoFields = new HashMap<>();
-        configNoFields.put(MODEL_ID_FIELD, "1234567678");
+        configNoFields.put(INDEX_MAPPING_FIELD, "1234567678");
         configNoFields.put(EMBEDDING_FIELD, "embedding_field");
         configNoFields.put(FIELD_MAP_FIELD, Map.of());
         exception = expectThrows(

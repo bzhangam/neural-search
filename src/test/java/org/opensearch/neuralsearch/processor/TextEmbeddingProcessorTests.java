@@ -91,7 +91,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
     private TextEmbeddingProcessor createInstanceWithLevel2MapConfig() {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(
             TextEmbeddingProcessor.FIELD_MAP_FIELD,
             ImmutableMap.of("key1", ImmutableMap.of("test1", "test1_knn"), "key2", ImmutableMap.of("test3", CHILD_LEVEL_2_KNN_FIELD))
@@ -103,7 +103,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
     private TextEmbeddingProcessor createInstanceWithLevel1MapConfig() {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(TextEmbeddingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1_knn", "key2", "key2_knn"));
         return (TextEmbeddingProcessor) textEmbeddingProcessorFactory.create(registry, PROCESSOR_TAG, DESCRIPTION, config);
     }
@@ -112,7 +112,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
     private TextEmbeddingProcessor createInstanceWithLevel1MapConfig(int batchSize) {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(TextEmbeddingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1_knn", "key2", "key2_knn"));
         config.put(AbstractBatchingProcessor.BATCH_SIZE_FIELD, batchSize);
         return (TextEmbeddingProcessor) textEmbeddingProcessorFactory.create(registry, PROCESSOR_TAG, DESCRIPTION, config);
@@ -122,7 +122,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
     public void testTextEmbeddingProcessConstructor_whenConfigMapError_throwIllegalArgumentException() {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         Map<String, String> fieldMap = new HashMap<>();
         fieldMap.put(null, "key1Mapped");
         fieldMap.put("key2", "key2Mapped");
@@ -138,7 +138,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
     public void testTextEmbeddingProcessConstructor_whenConfigMapEmpty_throwIllegalArgumentException() {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         try {
             textEmbeddingProcessorFactory.create(registry, PROCESSOR_TAG, DESCRIPTION, config);
         } catch (OpenSearchParseException e) {
@@ -181,7 +181,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
         );
 
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(TextEmbeddingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1Mapped", "key2", "key2Mapped"));
         TextEmbeddingProcessor processor = (TextEmbeddingProcessor) textEmbeddingProcessorFactory.create(
             registry,
@@ -209,7 +209,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
         );
 
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(TextEmbeddingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1Mapped", "key2", "key2Mapped"));
         TextEmbeddingProcessor processor = (TextEmbeddingProcessor) textEmbeddingProcessorFactory.create(
             registry,
@@ -335,7 +335,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
 
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(
             TextEmbeddingProcessor.FIELD_MAP_FIELD,
             ImmutableMap.of(
@@ -395,7 +395,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
 
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(
             TextEmbeddingProcessor.FIELD_MAP_FIELD,
             ImmutableMap.of(
@@ -453,7 +453,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
 
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(
             TextEmbeddingProcessor.FIELD_MAP_FIELD,
             ImmutableMap.of(
@@ -526,7 +526,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
 
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = buildObjMap(
-            Pair.of(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId"),
+            Pair.of(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId"),
             Pair.of(
                 TextEmbeddingProcessor.FIELD_MAP_FIELD,
                 buildObjMap(
@@ -588,7 +588,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
 
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(
             TextEmbeddingProcessor.FIELD_MAP_FIELD,
             ImmutableMap.of(
@@ -1211,7 +1211,7 @@ public class TextEmbeddingProcessorTests extends InferenceProcessorTestCase {
     private TextEmbeddingProcessor createInstanceWithNestedMapConfiguration(Map<String, Object> fieldMap) {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = buildObjMap(
-            Pair.of(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId"),
+            Pair.of(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId"),
             Pair.of(TextEmbeddingProcessor.FIELD_MAP_FIELD, fieldMap)
         );
         return (TextEmbeddingProcessor) textEmbeddingProcessorFactory.create(registry, PROCESSOR_TAG, DESCRIPTION, config);

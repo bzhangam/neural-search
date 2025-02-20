@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import org.opensearch.common.action.ActionFuture;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.common.util.CollectionUtils;
 import org.opensearch.ml.client.MachineLearningNodeClient;
@@ -131,6 +133,18 @@ public class MLCommonsClientAccessor {
         @NonNull final ActionListener<List<Float>> listener
     ) {
         retryableInferenceSentencesWithSingleVectorResult(TARGET_RESPONSE_FILTERS, modelId, inputObjects, 0, listener);
+    }
+
+    /**
+     * Use action future to block the thread since the shard level rewrite don't expect async action.
+     * We should wait for the response before we move on.
+     *
+     * @param modelId
+     * @param inputObjects
+     * @return
+     */
+    public List<Float> inferenceSentences(@NonNull final String modelId, @NonNull final Map<String, String> inputObjects) {
+        return retryableInferenceSentencesWithSingleVectorResult(TARGET_RESPONSE_FILTERS, modelId, inputObjects, 0);
     }
 
     /**
@@ -287,6 +301,22 @@ public class MLCommonsClientAccessor {
                 listener
             )
         ));
+    }
+
+    private List<Float> retryableInferenceSentencesWithSingleVectorResult(
+        final List<String> targetResponseFilters,
+        final String modelId,
+        final Map<String, String> inputObjects,
+        final int retryTime
+    ) {
+        MLInput mlInput = createMLMultimodalInput(targetResponseFilters, inputObjects);
+        ActionFuture<MLOutput> future = mlClient.predict(modelId, mlInput);
+        try {
+            return buildSingleVectorFromResponse(future.get());
+        } catch (InterruptedException | ExecutionException e) {
+            // TODO: Add retry later
+            throw new RuntimeException(e);
+        }
     }
 
     private MLInput createMLMultimodalInput(final List<String> targetResponseFilters, final Map<String, String> input) {

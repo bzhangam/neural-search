@@ -20,6 +20,7 @@ import static org.opensearch.neuralsearch.processor.TextImageEmbeddingProcessor.
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -27,6 +28,7 @@ import java.util.function.Supplier;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.join.ScoreMode;
 import org.opensearch.common.SetOnce;
 import org.opensearch.core.ParseField;
 import org.opensearch.core.action.ActionListener;
@@ -35,8 +37,10 @@ import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.index.mapper.MappedFieldType;
 import org.opensearch.index.mapper.NumberFieldMapper;
 import org.opensearch.index.query.AbstractQueryBuilder;
+import org.opensearch.index.query.NestedQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryRewriteContext;
 import org.opensearch.index.query.QueryShardContext;
@@ -45,6 +49,7 @@ import org.opensearch.knn.index.query.parser.MethodParametersParser;
 import org.opensearch.knn.index.query.parser.RescoreParser;
 import org.opensearch.knn.index.query.rescore.RescoreContext;
 import org.opensearch.neuralsearch.common.MinClusterVersionUtil;
+import org.opensearch.neuralsearch.mapper.SemanticTextFieldMapper;
 import org.opensearch.neuralsearch.ml.MLCommonsClientAccessor;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -455,60 +460,102 @@ public class NeuralQueryBuilder extends AbstractQueryBuilder<NeuralQueryBuilder>
 
     @Override
     protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) {
-        // When re-writing a QueryBuilder, if the QueryBuilder is not changed, doRewrite should return itself
-        // (see
-        // https://github.com/opensearch-project/OpenSearch/blob/main/server/src/main/java/org/opensearch/index/query/QueryBuilder.java#L90-L98).
-        // Otherwise, it should return the modified copy (see rewrite logic
-        // https://github.com/opensearch-project/OpenSearch/blob/main/server/src/main/java/org/opensearch/index/query/Rewriteable.java#L117.
-        // With the asynchronous call, on first rewrite, we create a new
-        // vector supplier that will get populated once the asynchronous call finishes and pass this supplier in to
-        // create a new builder. Once the supplier's value gets set, we return a KNNQueryBuilder. Otherwise, we just
-        // return the current unmodified query builder.
-        if (vectorSupplier() != null) {
-            if (vectorSupplier().get() == null) {
+        // Need to do inference before we reach the shard level
+        if (modelId() == null) {
+            QueryShardContext shardContext = queryRewriteContext.convertToShardContext();
+            if (shardContext != null) {
+                MappedFieldType mappedFieldType = shardContext.fieldMapper(fieldName());
+                if ((mappedFieldType instanceof SemanticTextFieldMapper.SemanticTextFieldType) == false) {
+                    throw new IllegalArgumentException("model_id is needed for neural query");
+                }
+                SemanticTextFieldMapper.SemanticTextFieldType semanticTextFieldType =
+                    (SemanticTextFieldMapper.SemanticTextFieldType) mappedFieldType;
+                String modelIdFromIndex = semanticTextFieldType.getModelId();
+
+                Map<String, String> inferenceInput = new HashMap<>();
+                if (StringUtils.isNotBlank(queryText())) {
+                    inferenceInput.put(INPUT_TEXT, queryText());
+                }
+                if (StringUtils.isNotBlank(queryImage())) {
+                    inferenceInput.put(INPUT_IMAGE, queryImage());
+                }
+
+                List<Float> floatList = ML_CLIENT.inferenceSentences(modelIdFromIndex, inferenceInput);
+
+                String nestedQueryPath = fieldName() + ".chunks";
+                String embeddingFieldName = nestedQueryPath + ".embedding";
+                KNNQueryBuilder knnQueryBuilder = KNNQueryBuilder.builder()
+                    .fieldName(embeddingFieldName)
+                    .vector(vectorAsListToArray(floatList))
+                    .filter(filter())
+                    .maxDistance(maxDistance)
+                    .minScore(minScore)
+                    .expandNested(expandNested)
+                    .k(k)
+                    .methodParameters(methodParameters)
+                    .rescoreContext(rescoreContext)
+                    .build();
+                return new NestedQueryBuilder(nestedQueryPath, knnQueryBuilder, ScoreMode.Max);
+            } else {
+                // no rewrite
                 return this;
             }
-            return KNNQueryBuilder.builder()
-                .fieldName(fieldName())
-                .vector(vectorSupplier.get())
-                .filter(filter())
-                .maxDistance(maxDistance)
-                .minScore(minScore)
-                .expandNested(expandNested)
-                .k(k)
-                .methodParameters(methodParameters)
-                .rescoreContext(rescoreContext)
-                .build();
-        }
+        } else {
+            // When re-writing a QueryBuilder, if the QueryBuilder is not changed, doRewrite should return itself
+            // (see
+            // https://github.com/opensearch-project/OpenSearch/blob/main/server/src/main/java/org/opensearch/index/query/QueryBuilder.java#L90-L98).
+            // Otherwise, it should return the modified copy (see rewrite logic
+            // https://github.com/opensearch-project/OpenSearch/blob/main/server/src/main/java/org/opensearch/index/query/Rewriteable.java#L117.
+            // With the asynchronous call, on first rewrite, we create a new
+            // vector supplier that will get populated once the asynchronous call finishes and pass this supplier in to
+            // create a new builder. Once the supplier's value gets set, we return a KNNQueryBuilder. Otherwise, we just
+            // return the current unmodified query builder.
+            if (vectorSupplier() != null) {
+                if (vectorSupplier().get() == null) {
+                    return this;
+                }
+                return KNNQueryBuilder.builder()
+                    .fieldName(fieldName())
+                    .vector(vectorSupplier.get())
+                    .filter(filter())
+                    .maxDistance(maxDistance)
+                    .minScore(minScore)
+                    .expandNested(expandNested)
+                    .k(k)
+                    .methodParameters(methodParameters)
+                    .rescoreContext(rescoreContext)
+                    .build();
+            }
 
-        SetOnce<float[]> vectorSetOnce = new SetOnce<>();
-        Map<String, String> inferenceInput = new HashMap<>();
-        if (StringUtils.isNotBlank(queryText())) {
-            inferenceInput.put(INPUT_TEXT, queryText());
+            SetOnce<float[]> vectorSetOnce = new SetOnce<>();
+            Map<String, String> inferenceInput = new HashMap<>();
+            if (StringUtils.isNotBlank(queryText())) {
+                inferenceInput.put(INPUT_TEXT, queryText());
+            }
+            if (StringUtils.isNotBlank(queryImage())) {
+                inferenceInput.put(INPUT_IMAGE, queryImage());
+            }
+            queryRewriteContext.registerAsyncAction(
+                ((client, actionListener) -> ML_CLIENT.inferenceSentences(modelId(), inferenceInput, ActionListener.wrap(floatList -> {
+                    vectorSetOnce.set(vectorAsListToArray(floatList));
+                    actionListener.onResponse(null);
+                }, actionListener::onFailure)))
+            );
+            return new NeuralQueryBuilder(
+                fieldName(),
+                queryText(),
+                queryImage(),
+                modelId(),
+                k(),
+                maxDistance(),
+                minScore(),
+                expandNested(),
+                vectorSetOnce::get,
+                filter(),
+                methodParameters(),
+                rescoreContext()
+            );
         }
-        if (StringUtils.isNotBlank(queryImage())) {
-            inferenceInput.put(INPUT_IMAGE, queryImage());
-        }
-        queryRewriteContext.registerAsyncAction(
-            ((client, actionListener) -> ML_CLIENT.inferenceSentences(modelId(), inferenceInput, ActionListener.wrap(floatList -> {
-                vectorSetOnce.set(vectorAsListToArray(floatList));
-                actionListener.onResponse(null);
-            }, actionListener::onFailure)))
-        );
-        return new NeuralQueryBuilder(
-            fieldName(),
-            queryText(),
-            queryImage(),
-            modelId(),
-            k(),
-            maxDistance(),
-            minScore(),
-            expandNested(),
-            vectorSetOnce::get,
-            filter(),
-            methodParameters(),
-            rescoreContext()
-        );
     }
 
     @Override
