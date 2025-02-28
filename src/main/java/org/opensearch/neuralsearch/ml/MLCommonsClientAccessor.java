@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import org.opensearch.common.action.ActionFuture;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.common.util.CollectionUtils;
 import org.opensearch.ml.client.MachineLearningNodeClient;
 import org.opensearch.ml.common.FunctionName;
+import org.opensearch.ml.common.MLModel;
 import org.opensearch.ml.common.dataset.MLInputDataset;
 import org.opensearch.ml.common.dataset.TextDocsInputDataSet;
 import org.opensearch.ml.common.dataset.TextSimilarityInputDataSet;
@@ -131,6 +134,18 @@ public class MLCommonsClientAccessor {
         @NonNull final ActionListener<List<Float>> listener
     ) {
         retryableInferenceSentencesWithSingleVectorResult(TARGET_RESPONSE_FILTERS, modelId, inputObjects, 0, listener);
+    }
+
+    /**
+     * Use action future to block the thread since the shard level rewrite don't expect async action.
+     * We should wait for the response before we move on.
+     *
+     * @param modelId
+     * @param inputObjects
+     * @return
+     */
+    public List<Float> inferenceSentences(@NonNull final String modelId, @NonNull final Map<String, String> inputObjects) {
+        return retryableInferenceSentencesWithSingleVectorResult(TARGET_RESPONSE_FILTERS, modelId, inputObjects, 0);
     }
 
     /**
@@ -289,6 +304,22 @@ public class MLCommonsClientAccessor {
         ));
     }
 
+    private List<Float> retryableInferenceSentencesWithSingleVectorResult(
+        final List<String> targetResponseFilters,
+        final String modelId,
+        final Map<String, String> inputObjects,
+        final int retryTime
+    ) {
+        MLInput mlInput = createMLMultimodalInput(targetResponseFilters, inputObjects);
+        ActionFuture<MLOutput> future = mlClient.predict(modelId, mlInput);
+        try {
+            return buildSingleVectorFromResponse(future.get());
+        } catch (InterruptedException | ExecutionException e) {
+            // TODO: Add retry later
+            throw new RuntimeException(e);
+        }
+    }
+
     private MLInput createMLMultimodalInput(final List<String> targetResponseFilters, final Map<String, String> input) {
         List<String> inputText = new ArrayList<>();
         inputText.add(input.get(INPUT_TEXT));
@@ -298,5 +329,9 @@ public class MLCommonsClientAccessor {
         final ModelResultFilter modelResultFilter = new ModelResultFilter(false, true, targetResponseFilters, null);
         final MLInputDataset inputDataset = new TextDocsInputDataSet(inputText, modelResultFilter);
         return new MLInput(FunctionName.TEXT_EMBEDDING, null, inputDataset);
+    }
+
+    public void getModel(@NonNull final String modelId, @NonNull final ActionListener<MLModel> listener) {
+        mlClient.getModel(modelId, null, listener);
     }
 }

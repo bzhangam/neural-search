@@ -5,7 +5,7 @@
 package org.opensearch.neuralsearch.processor.factory;
 
 import static org.mockito.Mockito.mock;
-import static org.opensearch.neuralsearch.processor.TextEmbeddingProcessor.MODEL_ID_FIELD;
+import static org.opensearch.neuralsearch.processor.TextEmbeddingProcessor.INDEX_MAPPING_FIELD;
 import static org.opensearch.neuralsearch.processor.TextEmbeddingProcessor.FIELD_MAP_FIELD;
 import static org.opensearch.neuralsearch.processor.SparseEncodingProcessor.TYPE;
 import static org.opensearch.neuralsearch.util.prune.PruneUtils.PRUNE_TYPE_FIELD;
@@ -46,7 +46,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenAllRequiredParamsPassed_thenSuccessful() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of("a", "b"));
 
         SparseEncodingProcessor processor = (SparseEncodingProcessor) sparseEncodingProcessorFactory.create(
@@ -67,7 +67,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenPruneParamsPassed_thenSuccessful() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of("a", "b"));
         config.put(PRUNE_TYPE_FIELD, "top_k");
         config.put(PRUNE_RATIO_FIELD, 2f);
@@ -90,7 +90,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenEmptyFieldMapField_thenFail() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of());
 
         IllegalArgumentException exception = assertThrows(
@@ -114,7 +114,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenMissingFieldMapField_thenFail() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         OpenSearchParseException exception = assertThrows(
             OpenSearchParseException.class,
             () -> sparseEncodingProcessorFactory.create(Map.of(), PROCESSOR_TAG, DESCRIPTION, config)
@@ -125,7 +125,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenInvalidPruneType_thenFail() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of("a", "b"));
         config.put(PRUNE_TYPE_FIELD, "invalid_prune_type");
         config.put(PRUNE_RATIO_FIELD, 2f);
@@ -140,7 +140,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenInvalidPruneRatio_thenFail() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of("a", "b"));
         config.put(PRUNE_TYPE_FIELD, "top_k");
         config.put(PRUNE_RATIO_FIELD, 0.2f);
@@ -155,7 +155,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenMissingPruneRatio_thenFail() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of("a", "b"));
         config.put(PRUNE_TYPE_FIELD, "alpha_mass");
 
@@ -169,7 +169,7 @@ public class SparseEncodingEmbeddingProcessorFactoryTests extends OpenSearchTest
     @SneakyThrows
     public void testCreateProcessor_whenMissingPruneType_thenFail() {
         Map<String, Object> config = new HashMap<>();
-        config.put(MODEL_ID_FIELD, MODEL_ID);
+        config.put(INDEX_MAPPING_FIELD, MODEL_ID);
         config.put(FIELD_MAP_FIELD, Map.of("a", "b"));
         config.put(PRUNE_RATIO_FIELD, 0.1);
 

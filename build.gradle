@@ -249,7 +249,9 @@ validateNebulaPom.enabled = false
 def knnJarDirectory = "$buildDir/dependencies/opensearch-knn"
 
 dependencies {
-    api "org.opensearch:opensearch:${opensearch_version}"
+//    api "org.opensearch:opensearch:${opensearch_version}"
+    implementation "org.opensearch:opensearch:${opensearch_version}"
+//    api files('/Users/bzhangam/.m2/repository/org/opensearch/opensearch/3.0.0-SNAPSHOT/opensearch-3.0.0-SNAPSHOT.jar')
     zipArchive group: 'org.opensearch.plugin', name:'opensearch-job-scheduler', version: "${opensearch_build}"
     zipArchive group: 'org.opensearch.plugin', name:'opensearch-knn', version: "${opensearch_build}"
     zipArchive group: 'org.opensearch.plugin', name:'opensearch-ml-plugin', version: "${opensearch_build}"

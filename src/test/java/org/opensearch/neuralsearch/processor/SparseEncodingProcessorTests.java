@@ -78,7 +78,7 @@ public class SparseEncodingProcessorTests extends InferenceProcessorTestCase {
     private SparseEncodingProcessor createInstance() {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(SparseEncodingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(SparseEncodingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(SparseEncodingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1Mapped", "key2", "key2Mapped"));
         return (SparseEncodingProcessor) sparseEncodingProcessorFactory.create(registry, PROCESSOR_TAG, DESCRIPTION, config);
     }
@@ -87,7 +87,7 @@ public class SparseEncodingProcessorTests extends InferenceProcessorTestCase {
     private SparseEncodingProcessor createInstance(int batchSize) {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(SparseEncodingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(SparseEncodingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(SparseEncodingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1Mapped", "key2", "key2Mapped"));
         config.put(AbstractBatchingProcessor.BATCH_SIZE_FIELD, batchSize);
         return (SparseEncodingProcessor) sparseEncodingProcessorFactory.create(registry, PROCESSOR_TAG, DESCRIPTION, config);
@@ -97,7 +97,7 @@ public class SparseEncodingProcessorTests extends InferenceProcessorTestCase {
     private SparseEncodingProcessor createInstance(PruneType pruneType, float pruneRatio) {
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(SparseEncodingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(SparseEncodingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(SparseEncodingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1Mapped", "key2", "key2Mapped"));
         config.put("prune_type", pruneType.getValue());
         config.put("prune_ratio", pruneRatio);
@@ -138,7 +138,7 @@ public class SparseEncodingProcessorTests extends InferenceProcessorTestCase {
         );
 
         Map<String, Object> config = new HashMap<>();
-        config.put(TextEmbeddingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(TextEmbeddingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(TextEmbeddingProcessor.FIELD_MAP_FIELD, ImmutableMap.of("key1", "key1Mapped", "key2", "key2Mapped"));
         SparseEncodingProcessor processor = (SparseEncodingProcessor) sparseEncodingProcessorFactory.create(
             registry,
@@ -206,7 +206,7 @@ public class SparseEncodingProcessorTests extends InferenceProcessorTestCase {
         IngestDocument ingestDocument = new IngestDocument(sourceAndMetadata, new HashMap<>());
         Map<String, Processor.Factory> registry = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(SparseEncodingProcessor.MODEL_ID_FIELD, "mockModelId");
+        config.put(SparseEncodingProcessor.INDEX_MAPPING_FIELD, "mockModelId");
         config.put(
             SparseEncodingProcessor.FIELD_MAP_FIELD,
             ImmutableMap.of("key1", Map.of("test1", "test1_knn"), "key2", Map.of("test4", "test4_knn"))

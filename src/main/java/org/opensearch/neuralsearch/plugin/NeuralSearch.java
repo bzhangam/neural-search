@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.opensearch.action.support.ActionFilter;
 import org.opensearch.client.Client;
 import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
 import org.opensearch.cluster.service.ClusterService;
@@ -24,9 +25,13 @@ import org.opensearch.core.common.io.stream.NamedWriteableRegistry;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.env.Environment;
 import org.opensearch.env.NodeEnvironment;
+import org.opensearch.index.mapper.TextFieldMapper;
 import org.opensearch.ingest.Processor;
 import org.opensearch.ml.client.MachineLearningNodeClient;
+import org.opensearch.neuralsearch.actionfilter.SemanticFieldFilter;
 import org.opensearch.neuralsearch.executors.HybridQueryExecutor;
+import org.opensearch.neuralsearch.mapper.SemanticFieldMapper;
+import org.opensearch.neuralsearch.mapper.SemanticTextFieldMapper;
 import org.opensearch.neuralsearch.ml.MLCommonsClientAccessor;
 import org.opensearch.neuralsearch.processor.NeuralQueryEnricherProcessor;
 import org.opensearch.neuralsearch.processor.NeuralSparseTwoPhaseProcessor;
@@ -41,6 +46,7 @@ import org.opensearch.neuralsearch.processor.NormalizationProcessor;
 import org.opensearch.neuralsearch.processor.combination.ScoreCombinationFactory;
 import org.opensearch.neuralsearch.processor.combination.ScoreCombiner;
 import org.opensearch.neuralsearch.processor.factory.ExplanationResponseProcessorFactory;
+import org.opensearch.neuralsearch.processor.factory.SemanticFieldProcessorFactory;
 import org.opensearch.neuralsearch.processor.factory.TextChunkingProcessorFactory;
 import org.opensearch.neuralsearch.processor.factory.RerankProcessorFactory;
 import org.opensearch.neuralsearch.processor.factory.SparseEncodingProcessorFactory;
@@ -60,6 +66,7 @@ import org.opensearch.neuralsearch.util.NeuralSearchClusterUtil;
 import org.opensearch.plugins.ActionPlugin;
 import org.opensearch.plugins.ExtensiblePlugin;
 import org.opensearch.plugins.IngestPlugin;
+import org.opensearch.plugins.MapperPlugin;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.plugins.SearchPipelinePlugin;
 import org.opensearch.plugins.SearchPlugin;
@@ -72,6 +79,7 @@ import org.opensearch.search.query.QueryPhaseSearcher;
 import org.opensearch.threadpool.ExecutorBuilder;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.watcher.ResourceWatcherService;
+import org.opensearch.index.mapper.Mapper;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -79,12 +87,20 @@ import lombok.extern.log4j.Log4j2;
  * Neural Search plugin class
  */
 @Log4j2
-public class NeuralSearch extends Plugin implements ActionPlugin, SearchPlugin, IngestPlugin, ExtensiblePlugin, SearchPipelinePlugin {
+public class NeuralSearch extends Plugin
+    implements
+        ActionPlugin,
+        SearchPlugin,
+        IngestPlugin,
+        ExtensiblePlugin,
+        SearchPipelinePlugin,
+        MapperPlugin {
     private MLCommonsClientAccessor clientAccessor;
     private NormalizationProcessorWorkflow normalizationProcessorWorkflow;
     private final ScoreNormalizationFactory scoreNormalizationFactory = new ScoreNormalizationFactory();
     private final ScoreCombinationFactory scoreCombinationFactory = new ScoreCombinationFactory();
     public static final String EXPLANATION_RESPONSE_KEY = "explanation_response";
+    public static Map<String, Mapper.TypeParser> SEMANTIC_MAPPERS = null;
 
     @Override
     public Collection<Object> createComponents(
@@ -105,6 +121,9 @@ public class NeuralSearch extends Plugin implements ActionPlugin, SearchPlugin, 
         NeuralSparseQueryBuilder.initialize(clientAccessor);
         HybridQueryExecutor.initialize(threadPool);
         normalizationProcessorWorkflow = new NormalizationProcessorWorkflow(new ScoreNormalizer(), new ScoreCombiner());
+
+        SEMANTIC_MAPPERS = Map.of(SemanticFieldMapper.CONTENT_TYPE + "_" + TextFieldMapper.CONTENT_TYPE, SemanticTextFieldMapper.PARSER);
+
         return List.of(clientAccessor);
     }
 
@@ -124,7 +143,9 @@ public class NeuralSearch extends Plugin implements ActionPlugin, SearchPlugin, 
 
     @Override
     public Map<String, Processor.Factory> getProcessors(Processor.Parameters parameters) {
-        clientAccessor = new MLCommonsClientAccessor(new MachineLearningNodeClient(parameters.client));
+        if (clientAccessor == null) {
+            clientAccessor = new MLCommonsClientAccessor(new MachineLearningNodeClient(parameters.client));
+        }
         return Map.of(
             TextEmbeddingProcessor.TYPE,
             new TextEmbeddingProcessorFactory(clientAccessor, parameters.env, parameters.ingestService.getClusterService()),
@@ -134,6 +155,22 @@ public class NeuralSearch extends Plugin implements ActionPlugin, SearchPlugin, 
             new TextImageEmbeddingProcessorFactory(clientAccessor, parameters.env, parameters.ingestService.getClusterService()),
             TextChunkingProcessor.TYPE,
             new TextChunkingProcessorFactory(parameters.env, parameters.ingestService.getClusterService(), parameters.analysisRegistry)
+        );
+    }
+
+    @Override
+    public Map<String, Processor.Factory> getInternalProcessors(Processor.Parameters parameters) {
+        if (clientAccessor == null) {
+            clientAccessor = new MLCommonsClientAccessor(new MachineLearningNodeClient(parameters.client));
+        }
+        return Map.of(
+            SemanticFieldProcessorFactory.PROCESSOR_FACTORY_TYPE,
+            new SemanticFieldProcessorFactory(
+                clientAccessor,
+                parameters.env,
+                parameters.ingestService.getClusterService(),
+                parameters.analysisRegistry
+            )
         );
     }
 
@@ -203,5 +240,15 @@ public class NeuralSearch extends Plugin implements ActionPlugin, SearchPlugin, 
                 parser -> RerankSearchExtBuilder.parse(parser)
             )
         );
+    }
+
+    @Override
+    public Map<String, Mapper.TypeParser> getMappers() {
+        return Map.of(SemanticFieldMapper.CONTENT_TYPE, new SemanticFieldMapper.TypeParser());
+    }
+
+    @Override
+    public List<ActionFilter> getActionFilters() {
+        return List.of(new SemanticFieldFilter(clientAccessor));
     }
 }
