@@ -11,8 +11,14 @@ import reactor.util.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static org.opensearch.neuralsearch.constants.MappingConstants.DOC;
+import static org.opensearch.neuralsearch.constants.MappingConstants.PATH_SEPARATOR;
+import static org.opensearch.neuralsearch.constants.MappingConstants.PROPERTIES;
 
 /**
  * A util class to help process mapping with semantic field
@@ -35,7 +41,7 @@ public class SemanticMappingUtils {
             final Object fieldConfig = entry.getValue();
 
             // Build the full path for the current field
-            final String fullPath = parentPath.isEmpty() ? fieldName : parentPath + "." + fieldName;
+            final String fullPath = parentPath.isEmpty() ? fieldName : parentPath + PATH_SEPARATOR + fieldName;
 
             if (fieldConfig instanceof Map) {
                 final Map<String, Object> fieldConfigMap = (Map<String, Object>) fieldConfig;
@@ -93,4 +99,46 @@ public class SemanticMappingUtils {
         }
         return (String) modelId;
     }
+
+    /**
+     * Help extract the properties from a mapping
+     * @param mapping index mapping
+     * @return properties of the mapping
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getProperties(Map<String, Object> mapping) {
+        if (mapping == null) {
+            return null;
+        }
+        // Actions like create index and legacy create/update index template will have the mapping properties under a
+        // _doc key. Other actions like update mapping and create/update index template will not have the _doc layer.
+        if (mapping.containsKey(DOC) && mapping.get(DOC) instanceof Map) {
+            Map<String, Object> doc = (Map<String, Object>) mapping.get(DOC);
+            if (doc.containsKey(PROPERTIES) && doc.get(PROPERTIES) instanceof Map) {
+                return (Map<String, Object>) doc.get(PROPERTIES);
+            } else {
+                return null;
+            }
+        } else if (mapping.containsKey(PROPERTIES) && mapping.get(PROPERTIES) instanceof Map) {
+            return (Map<String, Object>) mapping.get(PROPERTIES);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Collect unique model ids defined in the semantic fields
+     *
+     * @param semanticFieldPathToConfigMap path to config of semantic fields defined in the index mapping
+     * @return unique model ids defined in the semantic fields
+     */
+    public static Set<String> getUniqueModelIds(@NonNull final Map<String, Map<String, Object>> semanticFieldPathToConfigMap) {
+        final Set<String> modelIds = new HashSet<>();
+        for (Map.Entry<String, Map<String, Object>> entry : semanticFieldPathToConfigMap.entrySet()) {
+            final Map<String, Object> fieldConfigMap = entry.getValue();
+            modelIds.add(getModelId(fieldConfigMap, entry.getKey()));
+        }
+        return modelIds;
+    }
+
 }

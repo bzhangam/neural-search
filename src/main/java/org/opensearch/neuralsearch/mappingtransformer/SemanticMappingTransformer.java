@@ -26,23 +26,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.opensearch.neuralsearch.constants.MappingConstants.DOC;
-import static org.opensearch.neuralsearch.constants.MappingConstants.PROPERTIES;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.KNN_VECTOR_DIMENSION_FIELD_NAME;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.KNN_VECTOR_METHOD_FIELD_NAME;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.KNN_VECTOR_METHOD_SPACE_TYPE_FIELD_NAME;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.getBaseSemanticInfoConfig;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.getBaseSparseEmbeddingConfig;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.getBaseTextEmbeddingConfig;
+import static org.opensearch.neuralsearch.mappingtransformer.SemanticMappingUtils.getProperties;
 
 public class SemanticMappingTransformer implements MappingTransformer {
-    private final static Set<String> supportedModelAlgorithm = Set.of(
+    public final static Set<String> SUPPORTED_MODEL_ALGORITHM = Set.of(
         FunctionName.TEXT_EMBEDDING.name(),
         FunctionName.REMOTE.name(),
         FunctionName.SPARSE_ENCODING.name(),
         FunctionName.SPARSE_TOKENIZE.name()
     );
-    private final static Set<String> supportedRemoteModelTypes = Set.of(
+    public final static Set<String> SUPPORTED_REMOTE_MODEL_TYPES = Set.of(
         FunctionName.TEXT_EMBEDDING.name(),
         FunctionName.SPARSE_ENCODING.name(),
         FunctionName.SPARSE_TOKENIZE.name()
@@ -148,27 +147,6 @@ public class SemanticMappingTransformer implements MappingTransformer {
 
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> getProperties(Map<String, Object> mapping) {
-        if (mapping == null) {
-            return null;
-        }
-        // Actions like create index and legacy create/update index template will have the mapping properties under a
-        // _doc key. Other actions like update mapping and create/update index template will not have the _doc layer.
-        if (mapping.containsKey(DOC) && mapping.get(DOC) instanceof Map) {
-            Map<String, Object> doc = (Map<String, Object>) mapping.get(DOC);
-            if (doc.containsKey(PROPERTIES) && doc.get(PROPERTIES) instanceof Map) {
-                return (Map<String, Object>) doc.get(PROPERTIES);
-            } else {
-                return null;
-            }
-        } else if (mapping.containsKey(PROPERTIES) && mapping.get(PROPERTIES) instanceof Map) {
-            return (Map<String, Object>) mapping.get(PROPERTIES);
-        } else {
-            return null;
-        }
-    }
-
     private void fetchModelAndModifyMapping(
         @NonNull final Map<String, Map<String, Object>> semanticFieldPathToConfigMap,
         @NonNull final Map<String, Object> mappings,
@@ -248,7 +226,7 @@ public class SemanticMappingTransformer implements MappingTransformer {
             default -> throw new IllegalArgumentException(
                 modelConfig.getAlgorithm().name()
                     + " is not supported. The algorithm should be one of "
-                    + String.join(", ", supportedModelAlgorithm)
+                    + String.join(", ", SUPPORTED_MODEL_ALGORITHM)
             );
         };
 
@@ -260,7 +238,7 @@ public class SemanticMappingTransformer implements MappingTransformer {
 
         final FunctionName modelTypeFunctionName;
         final String errMsg = "remote model type is not supported. It should be one of ["
-            + String.join(", ", supportedRemoteModelTypes)
+            + String.join(", ", SUPPORTED_REMOTE_MODEL_TYPES)
             + "].";
         try {
             modelTypeFunctionName = FunctionName.from(modelType);
