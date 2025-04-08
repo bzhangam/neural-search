@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased 3.x](https://github.com/opensearch-project/neural-search/compare/main...HEAD)
 
 ### Features
+- Support semantic field type to simplify neural search set up([#1225](https://github.com/opensearch-project/neural-search/pull/1225)).
 
 ### Enhancements
 
