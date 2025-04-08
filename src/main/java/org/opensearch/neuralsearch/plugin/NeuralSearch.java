@@ -27,7 +27,9 @@ import org.opensearch.neuralsearch.settings.NeuralSearchSettingsAccessor;
 import org.opensearch.neuralsearch.stats.events.EventStatsManager;
 import org.opensearch.neuralsearch.stats.info.InfoStatsManager;
 import org.opensearch.index.mapper.Mapper;
+import org.opensearch.index.mapper.MappingTransformer;
 import org.opensearch.neuralsearch.mapper.SemanticFieldMapper;
+import org.opensearch.neuralsearch.mappingtransformer.SemanticMappingTransformer;
 import org.opensearch.neuralsearch.util.FeatureFlagUtil;
 import org.opensearch.plugins.MapperPlugin;
 import org.opensearch.transport.client.Client;
@@ -115,6 +117,7 @@ public class NeuralSearch extends Plugin
         ExtensiblePlugin,
         SearchPipelinePlugin {
     private MLCommonsClientAccessor clientAccessor;
+    private NamedXContentRegistry xContentRegistry;
     private NormalizationProcessorWorkflow normalizationProcessorWorkflow;
     private NeuralSearchSettingsAccessor settingsAccessor;
     private PipelineServiceUtil pipelineServiceUtil;
@@ -158,6 +161,7 @@ public class NeuralSearch extends Plugin
         pipelineServiceUtil = new PipelineServiceUtil(clusterService);
         infoStatsManager = new InfoStatsManager(NeuralSearchClusterUtil.instance(), settingsAccessor, pipelineServiceUtil);
         EventStatsManager.instance().initialize(settingsAccessor);
+        this.xContentRegistry = xContentRegistry;
         return List.of(clientAccessor, EventStatsManager.instance(), infoStatsManager);
     }
 
@@ -306,5 +310,13 @@ public class NeuralSearch extends Plugin
             return Map.of(SemanticFieldMapper.CONTENT_TYPE, new SemanticFieldMapper.TypeParser());
         }
         return Collections.emptyMap();
+    }
+
+    @Override
+    public List<MappingTransformer> getMappingTransformers() {
+        if (FeatureFlagUtil.isEnabled(SEMANTIC_FIELD_ENABLED)) {
+            return List.of(new SemanticMappingTransformer(clientAccessor, xContentRegistry));
+        }
+        return Collections.emptyList();
     }
 }
