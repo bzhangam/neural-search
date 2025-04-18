@@ -63,4 +63,8 @@ public class SemanticMappingUtilsTests extends OpenSearchTestCase {
 
         assertEquals(expectedPathToFieldPathMap, modelIdToFieldPathMap);
     }
+
+    public void testGetUniqueModelIds() {
+
+    }
 }

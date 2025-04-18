@@ -11,6 +11,9 @@ public class FeatureFlagUtil {
     private static final Map<String, Boolean> featureFlagMap = Map.of(SEMANTIC_FIELD_ENABLED, Boolean.FALSE);
 
     public static Boolean isEnabled(String name) {
+        if ("true".equals(System.getProperty(name))) {
+            return Boolean.TRUE;
+        }
         return featureFlagMap.getOrDefault(name, Boolean.FALSE);
     }
 }

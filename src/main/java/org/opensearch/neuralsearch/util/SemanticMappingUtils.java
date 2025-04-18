@@ -11,8 +11,10 @@ import reactor.util.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.opensearch.neuralsearch.constants.MappingConstants.DOC;
 import static org.opensearch.neuralsearch.constants.MappingConstants.PROPERTIES;
@@ -93,6 +95,21 @@ public class SemanticMappingUtils {
             throw new IllegalArgumentException("Model ID is a required string value for semantic field: " + fullPath);
         }
         return (String) modelId;
+    }
+
+    /**
+     * Collect unique model ids defined in the semantic fields
+     *
+     * @param semanticFieldPathToConfigMap path to config of semantic fields defined in the index mapping
+     * @return unique model ids defined in the semantic fields
+     */
+    public static Set<String> getUniqueModelIds(@NonNull final Map<String, Map<String, Object>> semanticFieldPathToConfigMap) {
+        final Set<String> modelIds = new HashSet<>();
+        for (Map.Entry<String, Map<String, Object>> entry : semanticFieldPathToConfigMap.entrySet()) {
+            final Map<String, Object> fieldConfigMap = entry.getValue();
+            modelIds.add(getModelId(fieldConfigMap, entry.getKey()));
+        }
+        return modelIds;
     }
 
     /**

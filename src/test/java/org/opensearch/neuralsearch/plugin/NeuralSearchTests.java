@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.opensearch.cluster.service.ClusterService;
+import org.opensearch.common.SuppressForbidden;
 import org.opensearch.common.settings.ClusterSettings;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
@@ -32,11 +33,13 @@ import org.opensearch.neuralsearch.processor.RRFProcessor;
 import org.opensearch.neuralsearch.processor.TextEmbeddingProcessor;
 import org.opensearch.neuralsearch.processor.factory.NormalizationProcessorFactory;
 import org.opensearch.neuralsearch.processor.factory.RRFProcessorFactory;
+import org.opensearch.neuralsearch.processor.factory.SemanticFieldProcessorFactory;
 import org.opensearch.neuralsearch.processor.rerank.RerankProcessor;
 import org.opensearch.neuralsearch.query.HybridQueryBuilder;
 import org.opensearch.neuralsearch.query.NeuralQueryBuilder;
 import org.opensearch.neuralsearch.query.OpenSearchQueryTestCase;
 import org.opensearch.neuralsearch.settings.NeuralSearchSettings;
+import org.opensearch.neuralsearch.util.FeatureFlagUtil;
 import org.opensearch.plugins.SearchPipelinePlugin;
 import org.opensearch.plugins.SearchPlugin;
 import org.opensearch.plugins.SearchPlugin.SearchExtSpec;
@@ -199,5 +202,20 @@ public class NeuralSearchTests extends OpenSearchQueryTestCase {
 
     public void testGetMappingTransformers_shouldReturnEmptyMap() {
         assertTrue(plugin.getMappingTransformers().isEmpty());
+    }
+
+    @SuppressForbidden(reason = "manipulates system properties for testing")
+    public void testGetSystemIngestProcessors() {
+        Map<String, Processor.Factory> systemIngestProcessors;
+        systemIngestProcessors = plugin.getSystemIngestProcessors(ingestParameters);
+        assertTrue(systemIngestProcessors.isEmpty());
+
+        System.setProperty(FeatureFlagUtil.SEMANTIC_FIELD_ENABLED, "true");
+        systemIngestProcessors = plugin.getSystemIngestProcessors(ingestParameters);
+        assertEquals(1, systemIngestProcessors.size());
+        assertTrue(
+            systemIngestProcessors.get(SemanticFieldProcessorFactory.PROCESSOR_FACTORY_TYPE) instanceof SemanticFieldProcessorFactory
+        );
+        System.setProperty(FeatureFlagUtil.SEMANTIC_FIELD_ENABLED, "false");
     }
 }
