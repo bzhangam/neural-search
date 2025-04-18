@@ -20,7 +20,7 @@ import org.apache.lucene.document.FeatureField;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.opensearch.Version;
+import org.opensearch.neuralsearch.util.FeatureFlagUtil;
 import org.opensearch.transport.client.Client;
 import org.opensearch.common.SetOnce;
 import org.opensearch.common.collect.Tuple;
@@ -38,7 +38,6 @@ import org.opensearch.index.query.QueryRewriteContext;
 import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.neuralsearch.ml.MLCommonsClientAccessor;
 import org.opensearch.neuralsearch.processor.TextInferenceRequest;
-import org.opensearch.neuralsearch.util.NeuralSearchClusterUtil;
 import org.opensearch.neuralsearch.util.TokenWeightUtil;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -50,6 +49,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.opensearch.neuralsearch.util.prune.PruneType;
 import org.opensearch.neuralsearch.util.prune.PruneUtils;
+
+import static org.opensearch.neuralsearch.common.MinClusterVersionUtil.isClusterOnOrAfterMinReqVersionForDefaultSparseModelIdSupport;
 
 /**
  * SparseEncodingQueryBuilder is responsible for handling "neural_sparse" query types. It uses an ML NEURAL_SPARSE model
@@ -93,8 +94,6 @@ public class NeuralSparseQueryBuilder extends AbstractQueryBuilder<NeuralSparseQ
     private float twoPhasePruneRatio = 0F;
     private PruneType twoPhasePruneType = PruneType.NONE;
 
-    private static final Version MINIMAL_SUPPORTED_VERSION_DEFAULT_MODEL_ID = Version.V_2_13_0;
-
     public static void initialize(MLCommonsClientAccessor mlClient) {
         NeuralSparseQueryBuilder.ML_CLIENT = mlClient;
     }
@@ -109,7 +108,7 @@ public class NeuralSparseQueryBuilder extends AbstractQueryBuilder<NeuralSparseQ
         super(in);
         this.fieldName = in.readString();
         this.queryText = in.readString();
-        if (isClusterOnOrAfterMinReqVersionForDefaultModelIdSupport()) {
+        if (isClusterOnOrAfterMinReqVersionForDefaultSparseModelIdSupport()) {
             this.modelId = in.readOptionalString();
         } else {
             this.modelId = in.readString();
@@ -163,7 +162,7 @@ public class NeuralSparseQueryBuilder extends AbstractQueryBuilder<NeuralSparseQ
         // to be backward compatible with previous version, we need to use writeString/readString API instead of optionalString API
         // after supporting query by tokens, queryText and modelId can be null. here we write an empty String instead
         out.writeString(StringUtils.defaultString(this.queryText, StringUtils.EMPTY));
-        if (isClusterOnOrAfterMinReqVersionForDefaultModelIdSupport()) {
+        if (isClusterOnOrAfterMinReqVersionForDefaultSparseModelIdSupport()) {
             out.writeOptionalString(this.modelId);
         } else {
             out.writeString(StringUtils.defaultString(this.modelId, StringUtils.EMPTY));
@@ -242,41 +241,46 @@ public class NeuralSparseQueryBuilder extends AbstractQueryBuilder<NeuralSparseQ
             );
         }
 
-        requireValue(sparseEncodingQueryBuilder.fieldName(), "Field name must be provided for " + NAME + " query");
-        if (Objects.isNull(sparseEncodingQueryBuilder.queryTokensSupplier())) {
-            requireValue(
-                sparseEncodingQueryBuilder.queryText(),
-                String.format(
-                    Locale.ROOT,
-                    "either %s field or %s field must be provided for [%s] query",
-                    QUERY_TEXT_FIELD.getPreferredName(),
-                    QUERY_TOKENS_FIELD.getPreferredName(),
-                    NAME
-                )
-            );
-            if (!isClusterOnOrAfterMinReqVersionForDefaultModelIdSupport()) {
+        if (!FeatureFlagUtil.isEnabled(FeatureFlagUtil.SEMANTIC_FIELD_ENABLED)) {
+            // To support semantic field we should delay this validation until we pull more detail from the index
+            // mapping during the query rewrite
+            requireValue(sparseEncodingQueryBuilder.fieldName(), "Field name must be provided for " + NAME + " query");
+            if (Objects.isNull(sparseEncodingQueryBuilder.queryTokensSupplier())) {
                 requireValue(
-                    sparseEncodingQueryBuilder.modelId(),
+                    sparseEncodingQueryBuilder.queryText(),
                     String.format(
                         Locale.ROOT,
-                        "using %s, %s field must be provided for [%s] query",
+                        "either %s field or %s field must be provided for [%s] query",
                         QUERY_TEXT_FIELD.getPreferredName(),
-                        MODEL_ID_FIELD.getPreferredName(),
+                        QUERY_TOKENS_FIELD.getPreferredName(),
                         NAME
                     )
                 );
+                if (!isClusterOnOrAfterMinReqVersionForDefaultSparseModelIdSupport()) {
+                    requireValue(
+                        sparseEncodingQueryBuilder.modelId(),
+                        String.format(
+                            Locale.ROOT,
+                            "using %s, %s field must be provided for [%s] query",
+                            QUERY_TEXT_FIELD.getPreferredName(),
+                            MODEL_ID_FIELD.getPreferredName(),
+                            NAME
+                        )
+                    );
+                }
+            }
+
+            if (StringUtils.EMPTY.equals(sparseEncodingQueryBuilder.queryText())) {
+                throw new IllegalArgumentException(
+                    String.format(Locale.ROOT, "%s field can not be empty", QUERY_TEXT_FIELD.getPreferredName())
+                );
+            }
+            if (StringUtils.EMPTY.equals(sparseEncodingQueryBuilder.modelId())) {
+                throw new IllegalArgumentException(
+                    String.format(Locale.ROOT, "%s field can not be empty", MODEL_ID_FIELD.getPreferredName())
+                );
             }
         }
-
-        if (StringUtils.EMPTY.equals(sparseEncodingQueryBuilder.queryText())) {
-            throw new IllegalArgumentException(
-                String.format(Locale.ROOT, "%s field can not be empty", QUERY_TEXT_FIELD.getPreferredName())
-            );
-        }
-        if (StringUtils.EMPTY.equals(sparseEncodingQueryBuilder.modelId())) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "%s field can not be empty", MODEL_ID_FIELD.getPreferredName()));
-        }
-
         return sparseEncodingQueryBuilder;
     }
 
@@ -442,9 +446,4 @@ public class NeuralSparseQueryBuilder extends AbstractQueryBuilder<NeuralSparseQ
     public String getWriteableName() {
         return NAME;
     }
-
-    private static boolean isClusterOnOrAfterMinReqVersionForDefaultModelIdSupport() {
-        return NeuralSearchClusterUtil.instance().getClusterMinVersion().onOrAfter(MINIMAL_SUPPORTED_VERSION_DEFAULT_MODEL_ID);
-    }
-
 }

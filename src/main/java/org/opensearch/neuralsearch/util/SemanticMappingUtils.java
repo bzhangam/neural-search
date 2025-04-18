@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.opensearch.neuralsearch.constants.MappingConstants.DOC;
+import static org.opensearch.neuralsearch.constants.MappingConstants.PATH_SEPARATOR;
 import static org.opensearch.neuralsearch.constants.MappingConstants.PROPERTIES;
 
 /**
@@ -40,7 +41,7 @@ public class SemanticMappingUtils {
             final Object fieldConfig = entry.getValue();
 
             // Build the full path for the current field
-            final String fullPath = parentPath.isEmpty() ? fieldName : parentPath + "." + fieldName;
+            final String fullPath = parentPath.isEmpty() ? fieldName : parentPath + PATH_SEPARATOR + fieldName;
 
             if (fieldConfig instanceof Map) {
                 final Map<String, Object> fieldConfigMap = (Map<String, Object>) fieldConfig;
@@ -136,5 +137,33 @@ public class SemanticMappingUtils {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Get the config of the target field from the index mapping by its path.
+     * @param mapping index mapping
+     * @param path path to the target field
+     * @return The config of the target field in the index mapping.
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getFieldConfigByPath(final Map<String, Object> mapping, final String path) {
+        final String[] paths = path.split("\\.");
+        Map<String, Object> currentMapping = getProperties(mapping);
+        for (int i = 0; i < paths.length; i++) {
+            if (currentMapping == null) {
+                return null;
+            }
+            final Object temp = currentMapping.get(paths[i]);
+            if (temp instanceof Map) {
+                currentMapping = (Map<String, Object>) temp;
+                // handle the object field in the path
+                if (i < paths.length - 1 && currentMapping.containsKey(PROPERTIES)) {
+                    currentMapping = (Map<String, Object>) currentMapping.get(PROPERTIES);
+                }
+            } else {
+                return null;
+            }
+        }
+        return currentMapping;
     }
 }

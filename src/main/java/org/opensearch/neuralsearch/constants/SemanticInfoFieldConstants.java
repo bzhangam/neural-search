@@ -23,7 +23,7 @@ public class SemanticInfoFieldConstants {
     public static final String KNN_VECTOR_DIMENSION_FIELD_NAME = "dimension";
     public static final String KNN_VECTOR_METHOD_FIELD_NAME = "method";
     public static final String KNN_VECTOR_METHOD_ENGINE_FIELD_NAME = "engine";
-    public static final String KNN_VECTOR_METHOD_DEFAULT_ENGINE = "faiss";
+    public static final String KNN_VECTOR_METHOD_DEFAULT_ENGINE = "lucene";
     public static final String KNN_VECTOR_METHOD_NAME_FIELD_NAME = "name";
     public static final String KNN_VECTOR_METHOD_DEFAULT_NAME = "hnsw";
     public static final String KNN_VECTOR_METHOD_SPACE_TYPE_FIELD_NAME = "space_type";

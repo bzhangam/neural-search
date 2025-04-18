@@ -807,7 +807,7 @@ public class NeuralQueryBuilderTests extends OpenSearchTestCase {
             return null;
         }).when(mlCommonsClientAccessor)
             .inferenceSentencesMap(argThat(request -> request.getInputObjects() != null), isA(ActionListener.class));
-        NeuralQueryBuilder.initialize(mlCommonsClientAccessor);
+        NeuralQueryBuilder.initialize(mlCommonsClientAccessor, mock(ClusterService.class));
 
         final CountDownLatch inProgressLatch = new CountDownLatch(1);
         QueryRewriteContext queryRewriteContext = mock(QueryRewriteContext.class);
@@ -846,7 +846,7 @@ public class NeuralQueryBuilderTests extends OpenSearchTestCase {
             return null;
         }).when(mlCommonsClientAccessor)
             .inferenceSentencesMap(argThat(request -> request.getInputObjects() != null), isA(ActionListener.class));
-        NeuralQueryBuilder.initialize(mlCommonsClientAccessor);
+        NeuralQueryBuilder.initialize(mlCommonsClientAccessor, mock(ClusterService.class));
 
         final CountDownLatch inProgressLatch = new CountDownLatch(1);
         QueryRewriteContext queryRewriteContext = mock(QueryRewriteContext.class);

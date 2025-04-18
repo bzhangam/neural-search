@@ -50,7 +50,7 @@ import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.C
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.MODEL_ID_FIELD_NAME;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.MODEL_NAME_FIELD_NAME;
 import static org.opensearch.neuralsearch.constants.SemanticInfoFieldConstants.MODEL_TYPE_FIELD_NAME;
-import static org.opensearch.neuralsearch.mappingtransformer.SemanticMappingTransformer.SUPPORTED_MODEL_ALGORITHM;
+import static org.opensearch.neuralsearch.mappingtransformer.SemanticMappingTransformer.SUPPORTED_MODEL_ALGORITHMS;
 import static org.opensearch.neuralsearch.mappingtransformer.SemanticMappingTransformer.SUPPORTED_REMOTE_MODEL_TYPES;
 import static org.opensearch.neuralsearch.processor.chunker.Chunker.CHUNK_STRING_COUNT_FIELD;
 import static org.opensearch.neuralsearch.processor.chunker.Chunker.DEFAULT_MAX_CHUNK_LIMIT;
@@ -259,7 +259,7 @@ public class SemanticFieldProcessor extends AbstractBatchingSystemProcessor {
                 final String errMsgUnsupportedModelType = "model type is not supported for model id "
                     + modelId
                     + ". It should be one of ["
-                    + String.join(", ", SUPPORTED_MODEL_ALGORITHM)
+                    + String.join(", ", SUPPORTED_MODEL_ALGORITHMS)
                     + "].";
                 throw new IllegalArgumentException(errMsgUnsupportedModelType);
         }

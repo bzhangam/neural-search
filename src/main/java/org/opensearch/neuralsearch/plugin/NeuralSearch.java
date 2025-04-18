@@ -147,7 +147,7 @@ public class NeuralSearch extends Plugin
         final Supplier<RepositoriesService> repositoriesServiceSupplier
     ) {
         NeuralSearchClusterUtil.instance().initialize(clusterService);
-        NeuralQueryBuilder.initialize(clientAccessor);
+        NeuralQueryBuilder.initialize(clientAccessor, clusterService);
         NeuralSparseQueryBuilder.initialize(clientAccessor);
         QueryTextExtractorRegistry queryTextExtractorRegistry = new QueryTextExtractorRegistry();
         SemanticHighlighterEngine semanticHighlighterEngine = SemanticHighlighterEngine.builder()

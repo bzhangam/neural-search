@@ -21,7 +21,8 @@ import static org.opensearch.neuralsearch.query.NeuralQueryBuilder.QUERY_IMAGE_F
  */
 public final class MinClusterVersionUtil {
 
-    private static final Version MINIMAL_SUPPORTED_VERSION_DEFAULT_MODEL_ID = Version.V_2_11_0;
+    private static final Version MINIMAL_SUPPORTED_VERSION_DEFAULT_DENSE_MODEL_ID = Version.V_2_11_0;
+    private static final Version MINIMAL_SUPPORTED_VERSION_DEFAULT_SPARSE_MODEL_ID = Version.V_2_13_0;
     private static final Version MINIMAL_SUPPORTED_VERSION_RADIAL_SEARCH = Version.V_2_14_0;
     private static final Version MINIMAL_SUPPORTED_VERSION_QUERY_IMAGE_FIX = Version.V_2_19_0;
     private static final Version MINIMAL_SUPPORTED_VERSION_PAGINATION_IN_HYBRID_QUERY = Version.V_2_19_0;
@@ -29,14 +30,18 @@ public final class MinClusterVersionUtil {
 
     // Note this minimal version will act as a override
     private static final Map<String, Version> MINIMAL_VERSION_NEURAL = ImmutableMap.<String, Version>builder()
-        .put(MODEL_ID_FIELD.getPreferredName(), MINIMAL_SUPPORTED_VERSION_DEFAULT_MODEL_ID)
+        .put(MODEL_ID_FIELD.getPreferredName(), MINIMAL_SUPPORTED_VERSION_DEFAULT_DENSE_MODEL_ID)
         .put(MAX_DISTANCE_FIELD.getPreferredName(), MINIMAL_SUPPORTED_VERSION_RADIAL_SEARCH)
         .put(MIN_SCORE_FIELD.getPreferredName(), MINIMAL_SUPPORTED_VERSION_RADIAL_SEARCH)
         .put(QUERY_IMAGE_FIELD.getPreferredName(), MINIMAL_SUPPORTED_VERSION_QUERY_IMAGE_FIX)
         .build();
 
-    public static boolean isClusterOnOrAfterMinReqVersionForDefaultModelIdSupport() {
-        return NeuralSearchClusterUtil.instance().getClusterMinVersion().onOrAfter(MINIMAL_SUPPORTED_VERSION_DEFAULT_MODEL_ID);
+    public static boolean isClusterOnOrAfterMinReqVersionForDefaultDenseModelIdSupport() {
+        return NeuralSearchClusterUtil.instance().getClusterMinVersion().onOrAfter(MINIMAL_SUPPORTED_VERSION_DEFAULT_DENSE_MODEL_ID);
+    }
+
+    public static boolean isClusterOnOrAfterMinReqVersionForDefaultSparseModelIdSupport() {
+        return NeuralSearchClusterUtil.instance().getClusterMinVersion().onOrAfter(MINIMAL_SUPPORTED_VERSION_DEFAULT_SPARSE_MODEL_ID);
     }
 
     public static boolean isClusterOnOrAfterMinReqVersionForRadialSearch() {
