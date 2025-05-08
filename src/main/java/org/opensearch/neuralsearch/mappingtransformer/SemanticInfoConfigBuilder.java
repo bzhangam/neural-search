@@ -99,6 +99,8 @@ public class SemanticInfoConfigBuilder {
         config.put(TYPE, KNNVectorFieldMapper.CONTENT_TYPE);
         config.put(KNN_VECTOR_DIMENSION_FIELD_NAME, this.embeddingDimension);
         final Map<String, Object> methodConfig = new HashMap<>();
+        // Testing purpose
+        methodConfig.put("engine", "lucene");
         methodConfig.put(KNN_VECTOR_METHOD_NAME_FIELD_NAME, this.knnMethodName);
         methodConfig.put(KNN_VECTOR_METHOD_SPACE_TYPE_FIELD_NAME, this.spaceType);
         config.put(KNN_VECTOR_METHOD_FIELD_NAME, methodConfig);
