@@ -333,6 +333,7 @@ test {
     include '**/*Tests.class'
     systemProperty 'tests.security.manager', 'false'
     systemProperty "jdk.attach.allowAttachSelf", true
+    systemProperty "java.library.path", "$rootDir/jni/build/release"
 }
 
 // Setting up Integration Tests
