@@ -10,6 +10,6 @@ public class NativeVsagServiceTests extends OpenSearchTestCase {
 
     public void test_add() {
         NativeVsagService lib = new NativeVsagService();
-
+        lib.init();
     }
 }

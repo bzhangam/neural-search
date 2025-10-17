@@ -2,7 +2,6 @@
  * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.opensearch.neuralsearch.jni;
 
 public class VsagSparseDataset {
@@ -25,8 +24,19 @@ public class VsagSparseDataset {
         this.globalIds = globalIds;
     }
 
-    public int getNumElements() { return numElements; }
-    public int[][] getIds() { return ids; }
-    public float[][] getValues() { return values; }
-    public long[] getGlobalIds() { return globalIds; }
+    public int getNumElements() {
+        return numElements;
+    }
+
+    public int[][] getIds() {
+        return ids;
+    }
+
+    public float[][] getValues() {
+        return values;
+    }
+
+    public long[] getGlobalIds() {
+        return globalIds;
+    }
 }

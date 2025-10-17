@@ -33,9 +33,7 @@ public class NativeVsagService {
     public native boolean deserializeIndex(long indexPointer, String filePath, String buildParams);
 
     // Native method to perform a KNN search
-    public native VsagSearchResult[] knnSearch(
-            long indexPointer, VsagSparseDataset queryDataset, int k, String searchParams
-    );
+    public native VsagSearchResult[] knnSearch(long indexPointer, VsagSparseDataset queryDataset, int k, String searchParams);
 
     // Native method to clean up resources, if needed
     public native void cleanup(long indexPointer);

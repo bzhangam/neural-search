@@ -5,6 +5,8 @@ allprojects {
             // Normally this isn't necessary, but we have Java sources in
             // non-standard places
             target '**/*.java'
+            // Exclude a specific folder
+            targetExclude 'jni/**'
 
             removeUnusedImports()
             eclipse().configFile rootProject.file('formatter/formatterConfig.xml')

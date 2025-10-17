@@ -317,7 +317,7 @@ project.tasks.delombok.dependsOn(extractKnnJar)
 
 compileJava {
     dependsOn extractKnnJar
-    dependsOn spotlessApply
+//    dependsOn spotlessApply
     options.compilerArgs.addAll(["-processor", 'lombok.launch.AnnotationProcessorHider$AnnotationProcessor'])
 }
 compileTestJava {
@@ -334,6 +334,11 @@ test {
     systemProperty 'tests.security.manager', 'false'
     systemProperty "jdk.attach.allowAttachSelf", true
     systemProperty "java.library.path", "$rootDir/jni/build/release"
+    jvmArgs += "--enable-native-access=ALL-UNNAMED"
+
+    if (System.getProperty("test.debug") != null) {
+        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005'
+    }
 }
 
 // Setting up Integration Tests

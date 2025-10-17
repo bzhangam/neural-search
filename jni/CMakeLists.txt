@@ -55,12 +55,8 @@ FetchContent_Declare (
 
 FetchContent_MakeAvailable(vsag)
 
-if(APPLE)
-    # $ORIGIN is not supported by Apple
-    file(READ "${VSAG_SOURCE_DIR}/CMakeLists.txt" VSAG_CMAKE)
-    string(REPLACE "-rpath=\\\\\\\\\$\\\\\$ORIGIN" "-rpath,@loader_path" VSAG_CMAKE_FIXED "${VSAG_CMAKE}")
-    file(WRITE "${VSAG_SOURCE_DIR}/CMakeLists.txt" "${VSAG_CMAKE_FIXED}")
-endif()
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/vsag-build/antlr4/install/lib)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/vsag-build/openblas/install/lib)
 
 add_library(${TARGET_LIB_VSAG} SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/org_opensearch_neuralsearch_jni_NativeVsagService.cpp
@@ -71,9 +67,12 @@ target_include_directories(${TARGET_LIB_VSAG} PRIVATE
     $ENV{JAVA_HOME}/include
     $ENV{JAVA_HOME}/include/${JVM_OS_TYPE}
     ${vsag_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/openblas/install/include
 )
+add_dependencies(${TARGET_LIB_VSAG} vsag)
 opensearch_set_common_properties(${TARGET_LIB_VSAG})
 list(APPEND TARGET_LIBS ${TARGET_LIB_VSAG})
+
 
 
 # ---------------------------------------------------------------------------

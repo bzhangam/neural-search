@@ -2,7 +2,6 @@
  * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.opensearch.neuralsearch.jni;
 
 public class VsagSearchResult {
@@ -17,6 +16,11 @@ public class VsagSearchResult {
         this.score = score;
     }
 
-    public long getId() { return id; }
-    public float getScore() { return score; }
+    public long getId() {
+        return id;
+    }
+
+    public float getScore() {
+        return score;
+    }
 }
