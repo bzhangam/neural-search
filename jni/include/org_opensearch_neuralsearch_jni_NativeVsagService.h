@@ -26,9 +26,9 @@ JNIEXPORT jlong JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_c
 /*
  * Class:     org_opensearch_neuralsearch_jni_NativeVsagService
  * Method:    add
- * Signature: (JLorg/opensearch/neuralsearch/jni/VsagSparseDataset;)Z
+ * Signature: (JLorg/opensearch/neuralsearch/jni/VsagDataset;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_add
+JNIEXPORT jlongArray JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_add
   (JNIEnv *, jobject, jlong, jobject);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT jboolean JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagServic
  * Method:    serializeIndex
  * Signature: (JLjava/lang/String;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_serializeIndex
+JNIEXPORT void JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_serializeIndex
   (JNIEnv *, jobject, jlong, jstring);
 
 /*
@@ -44,8 +44,8 @@ JNIEXPORT jboolean JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagServic
  * Method:    deserializeIndex
  * Signature: (JLjava/lang/String;Ljava/lang/String;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_deserializeIndex
-  (JNIEnv *, jobject, jlong, jstring, jstring);
+JNIEXPORT void JNICALL Java_org_opensearch_neuralsearch_jni_NativeVsagService_deserializeIndex
+  (JNIEnv *, jobject, jlong, jstring);
 
 /*
  * Class:     org_opensearch_neuralsearch_jni_NativeVsagService

@@ -60,6 +60,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/vsag-build/openblas/ins
 
 add_library(${TARGET_LIB_VSAG} SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/org_opensearch_neuralsearch_jni_NativeVsagService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/jni_util.cpp
 )
 target_link_libraries (${TARGET_LIB_VSAG} PRIVATE vsag)
 target_include_directories(${TARGET_LIB_VSAG} PRIVATE

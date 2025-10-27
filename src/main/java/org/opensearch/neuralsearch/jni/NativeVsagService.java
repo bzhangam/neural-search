@@ -23,17 +23,17 @@ public class NativeVsagService {
      */
     public native long createIndex(String indexType, String buildParams);
 
-    // Native method to build the index (index->Build(base))
-    public native boolean add(long indexPointer, VsagSparseDataset baseDataset);
+    // Native method to build the index (index->Add(base))
+    public native long[] add(long indexPointer, VsagDataset dataset);
 
     // Native method to serialize index to disk
-    public native boolean serializeIndex(long indexPointer, String filePath);
+    public native void serializeIndex(long indexPointer, String filePath);
 
     // Native method to deserialize index from disk
-    public native boolean deserializeIndex(long indexPointer, String filePath, String buildParams);
+    public native void deserializeIndex(long indexPointer, String filePath);
 
     // Native method to perform a KNN search
-    public native VsagSearchResult[] knnSearch(long indexPointer, VsagSparseDataset queryDataset, int k, String searchParams);
+    public native VsagSearchResult[] knnSearch(long indexPointer, VsagDataset queryDataset, int k, String searchParams);
 
     // Native method to clean up resources, if needed
     public native void cleanup(long indexPointer);
