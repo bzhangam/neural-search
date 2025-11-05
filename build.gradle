@@ -484,7 +484,7 @@ task updateVersion {
 // Remote Model Integration Tests
 def isDockerAvailable() {
     try {
-        def process = "docker version".execute()
+        def process = "sudo docker version".execute()
         process.waitFor()
         return process.exitValue() == 0
     } catch (Exception e) {
