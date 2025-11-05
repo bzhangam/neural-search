@@ -591,6 +591,118 @@ task remoteModelIntegTest(type: RestIntegTestTask) {
     }
 }
 
+
+task remoteModelIntegTestRemote(type: RestIntegTestTask) {
+    description = "Run all remote model integration tests with auto-discovered models against a remote cluster"
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+
+    systemProperty "https", System.getProperty("https")
+    systemProperty "user", System.getProperty("user")
+    systemProperty "password", System.getProperty("password")
+
+    systemProperty 'cluster.number_of_nodes', "${_numNodes}"
+
+    systemProperty 'tests.security.manager', 'false'
+
+    // Run tests with remote cluster only if rest case is defined
+    if (System.getProperty("tests.rest.cluster") != null) {
+        // Filter to only run remote model tests
+        filter {
+            includeTestsMatching "*RemoteModelIT*"
+        }
+    }
+
+    // Path to handlers directory for auto-discovery
+    def handlersDir = file("src/test/resources/remote-models/torchserve/handlers")
+    def discoveredModels = []
+
+    // Auto-discover all models from handler files
+    if (handlersDir.exists()) {
+        handlersDir.eachFile { file ->
+            if (file.name.endsWith("_handler.py")) {
+                def modelName = file.name.replace("_handler.py", "")
+                discoveredModels.add(modelName)
+            }
+        }
+    }
+
+    // Set endpoint for each discovered model
+    discoveredModels.each { model ->
+        def envVarName = "${model.toUpperCase().replace('_', '_')}_ENDPOINT"
+        def endpoint = "http://localhost:8080/predictions/${model}"
+        environment envVarName, endpoint
+        systemProperty "tests.${model}.endpoint", endpoint
+    }
+
+    // Common endpoints for backward compatibility
+    environment "TORCHSERVE_ENDPOINT", "http://localhost:8080"
+    systemProperty "tests.torchserve.endpoint", "http://localhost:8080"
+
+    // System properties from integTest
+    systemProperty 'tests.security.manager', 'false'
+    systemProperty 'java.io.tmpdir', opensearch_tmp_dir.absolutePath
+    systemProperty('project.root', project.rootDir.absolutePath)
+
+    // Path to the run.sh script
+    def runScript = file("src/test/resources/remote-models/torchserve/scripts/run.sh")
+
+    doFirst {
+        // Check Docker availability
+        if (!isDockerAvailable()) {
+            throw new GradleException("Docker is not available. Please install Docker to run remote model tests.")
+        }
+
+        // Ensure script exists
+        if (!runScript.exists()) {
+            throw new GradleException("run.sh script not found at: ${runScript.absolutePath}")
+        }
+
+        // Make script executable
+        runScript.setExecutable(true)
+
+        // Display discovered models
+        if (!discoveredModels.isEmpty()) {
+            println "Auto-discovered models: ${discoveredModels.join(', ')}"
+        } else {
+            println "WARNING: No models discovered in ${handlersDir.absolutePath}"
+        }
+
+        // Start TorchServe and setup all discovered models
+        println "Setting up TorchServe and deploying all models..."
+        exec {
+            commandLine runScript.absolutePath, "lifecycle", "setup"
+            standardOutput = System.out
+            errorOutput = System.err
+        }
+    }
+
+    doLast {
+        // Teardown TorchServe
+        println "Stopping TorchServe..."
+        exec {
+            commandLine runScript.absolutePath, "lifecycle", "teardown"
+            ignoreExitValue true  // Do not fail if already stopped
+        }
+    }
+
+    // Test logging configuration
+    testLogging {
+        events "passed", "skipped", "failed"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat = "full"
+    }
+
+    // Generate separate test report
+    reports {
+        html.destination = file("$buildDir/reports/remote-model-tests")
+        junitXml.destination = file("$buildDir/test-results/remote-model-tests")
+    }
+}
+
 // Configure test cluster for remoteModelIntegTest
 testClusters.remoteModelIntegTest {
     testDistribution = "ARCHIVE"
