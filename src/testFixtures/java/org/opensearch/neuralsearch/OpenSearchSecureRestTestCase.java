@@ -72,6 +72,11 @@ public abstract class OpenSearchSecureRestTestCase extends OpenSearchRestTestCas
     );
 
     @Override
+    protected void deleteRepository(String repoName) throws IOException {
+        logger.debug("wiping snapshot repository [{}]", repoName);
+    }
+
+    @Override
     protected String getProtocol() {
         if (protocol == null) {
             protocol = readProtocolFromSystemProperty();
