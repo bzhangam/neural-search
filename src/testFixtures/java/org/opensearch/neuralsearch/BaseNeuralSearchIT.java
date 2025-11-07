@@ -176,11 +176,17 @@ public abstract class BaseNeuralSearchIT extends OpenSearchSecureRestTestCase {
             deleteExistingIngestionPipelines();
             deleteExistingSearchPipelines();
             deleteExistingModels();
+            logger.info("deleteExistingIndices is invoked");
             deleteExistingIndices();
         }
     }
 
     protected boolean shouldCleanUpResources() {
+        return false;
+    }
+
+    @Override
+    protected boolean preserveClusterUponCompletion() {
         return true;
     }
 

@@ -279,6 +279,7 @@ public class NeuralSparseTwoPhaseProcessorIT extends BaseNeuralSearchIT {
         createNeuralSparseTwoPhaseSearchProcessor(search_pipeline, 0.7f, 30f, 10000);
         setDefaultSearchPipelineForIndex(TEST_TWO_PHASE_BASIC_INDEX_NAME);
         assertSearchScore(sparseEncodingQueryBuilder, TEST_TWO_PHASE_BASIC_INDEX_NAME, 110);
+        fail();
     }
 
     @SneakyThrows
@@ -638,8 +639,10 @@ public class NeuralSparseTwoPhaseProcessorIT extends BaseNeuralSearchIT {
     }
 
     private void assertSearchScore(NeuralSparseQueryBuilder builder, String indexName, float expectedScore) {
-        Map<String, Object> searchResponse = search(indexName, builder, 10);
+        Map<String, Object> searchResponse = search(indexName, builder, null, 10, Map.of("explain", Boolean.TRUE.toString()));
+        logger.info("searchResponse: {}", searchResponse);
         Map<String, Object> firstInnerHit = getFirstInnerHit(searchResponse);
+        logger.info("firstInnerHit: {}", firstInnerHit);
         assertEquals(expectedScore, objectToFloat(firstInnerHit.get("_score")), DELTA);
     }
 }
