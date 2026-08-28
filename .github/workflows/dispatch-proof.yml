@@ -1,0 +1,35 @@
+name: Dispatch Proof
+
+# Purpose: prove that once a `workflow_dispatch` trigger is registered on the
+# default branch, dispatching against a feature branch executes THAT BRANCH's
+# version of the workflow body + repo contents (not the default branch's).
+# This validates the test loop for the core gradle-check split
+# (opensearch-project/OpenSearch#19378): the substantive change can be
+# exercised end-to-end from a branch before it is merged to the default branch.
+# Only a minimal trigger stub needs to live on the default branch.
+#
+# This file exists on `main` as the registration stub. The `ci/dispatch-proof`
+# branch carries a DIFFERENT body (prints BRANCH marker) plus a branch-only
+# MARKER.txt, so a dispatch against that branch proves branch-body execution.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/SHA this run was dispatched against (informational only)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Which version ran
+        run: |
+          echo "MARKER: dispatch-proof running the MAIN version"
+          echo "github.ref_name = ${{ github.ref_name }}"
+          echo "github.sha      = ${{ github.sha }}"
+          echo "inputs.ref      = ${{ github.event.inputs.ref }}"
