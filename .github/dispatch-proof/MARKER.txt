@@ -1,0 +1,5 @@
+dispatch-proof-v1
+This file exists ONLY on the ci/dispatch-proof branch, not on main.
+If a workflow_dispatch run prints this content, it proves the workflow
+definition and repo contents were loaded from the dispatched branch ref
+(not from the default branch).
